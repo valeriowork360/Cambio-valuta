@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f7b5f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Cambio">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<title>Cambio Valute</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f4f3ef; --card:#ffffff; --ink:#16181d; --muted:#6b6f78; --line:#e6e4dd;
+    --accent:#0f7b5f; --accent-soft:#e3f2ec; --danger:#b4412e;
+    --shadow:0 1px 2px rgba(0,0,0,.04),0 4px 14px rgba(0,0,0,.04);
+  }
+  @media (prefers-color-scheme:dark){
+    :root{--bg:#111316;--card:#1a1d22;--ink:#eef0f3;--muted:#8d939d;--line:#2a2e35;
+      --accent:#3fc59a;--accent-soft:#163329;--danger:#e2735f;--shadow:none}
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font-family:Onest,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:560px;margin:0 auto;padding:calc(20px + env(safe-area-inset-top)) calc(14px + env(safe-area-inset-right)) calc(40px + env(safe-area-inset-bottom)) calc(14px + env(safe-area-inset-left))}
+  header{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:14px}
+  h1{font-size:22px;font-weight:700;margin:0;letter-spacing:-.01em}
+  .upd{font-size:12.5px;color:var(--muted);text-align:right;line-height:1.4}
+  .upd b{color:var(--ink);font-weight:600}
+  .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--muted);margin-right:5px;vertical-align:1px}
+  .dot.live{background:var(--accent)}
+  .list{display:flex;flex-direction:column;gap:8px}
+  .row{background:var(--card);border:1.5px solid var(--line);border-radius:14px;padding:10px 10px 10px 12px;box-shadow:var(--shadow);display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;transition:border-color .15s}
+  .row.active{border-color:var(--accent)}
+  .cur{display:flex;align-items:center;gap:9px;background:none;border:0;padding:4px 2px;color:inherit;cursor:pointer;font:inherit;text-align:left;min-width:0}
+  .flag{font-size:26px;line-height:1;width:30px;text-align:center}
+  .code{font-weight:700;font-size:16px;letter-spacing:.02em;display:flex;align-items:center;gap:3px}
+  .code svg{opacity:.45}
+  .name{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px}
+  .val{width:100%;min-width:0;border:0;background:transparent;color:var(--ink);font-family:"JetBrains Mono",ui-monospace,monospace;font-weight:600;font-size:21px;text-align:right;padding:6px 2px;outline:none}
+  .val::placeholder{color:var(--muted)}
+  .sub{grid-column:1 / 3;white-space:nowrap;font-size:12px;color:var(--muted);text-align:right;margin-top:-6px;font-family:"JetBrains Mono",ui-monospace,monospace}
+  .rm{background:none;border:0;color:var(--muted);width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:18px;line-height:1}
+  .rm:hover{background:var(--bg);color:var(--danger)}
+  .actions{display:flex;gap:8px;margin-top:12px}
+  .btn{flex:1;border:1.5px dashed var(--line);background:transparent;color:var(--ink);border-radius:12px;padding:12px;font:600 14px Onest,sans-serif;cursor:pointer}
+  .btn.solid{border-style:solid}
+  .btn:hover{border-color:var(--accent);color:var(--accent)}
+  .note{font-size:13px;color:var(--muted);margin-top:16px;line-height:1.5}
+  /* modal */
+  .ov{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:flex-end;justify-content:center;z-index:10}
+  .ov.open{display:flex}
+  .sheet{background:var(--card);width:100%;max-width:560px;max-height:80vh;padding-bottom:env(safe-area-inset-bottom);border-radius:18px 18px 0 0;display:flex;flex-direction:column;overflow:hidden}
+  @media(min-width:600px){.ov{align-items:center}.sheet{border-radius:18px}}
+  .sh-h{padding:14px;border-bottom:1px solid var(--line);display:flex;gap:8px}
+  .sh-h input{flex:1;border:1.5px solid var(--line);border-radius:10px;padding:11px 12px;font:15px Onest,sans-serif;background:var(--bg);color:var(--ink);outline:none}
+  .sh-h input:focus{border-color:var(--accent)}
+  .sh-h button{border:0;background:none;color:var(--muted);font:600 14px Onest,sans-serif;cursor:pointer}
+  .opts{overflow:auto;padding:6px}
+  .opt{display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px;cursor:pointer;border:0;background:none;width:100%;color:inherit;font:inherit;text-align:left}
+  .opt:hover,.opt:focus{background:var(--accent-soft);outline:none}
+  .opt .flag{font-size:22px}
+  .opt .c{font-weight:700;width:44px}
+  .opt .n{color:var(--muted);font-size:14px}
+  .opt.used{opacity:.4}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Cambio Valute</h1>
+    <div class="upd" id="upd"></div>
+  </header>
+  <div class="list" id="list"></div>
+  <div class="actions">
+    <button class="btn" id="add">+ Aggiungi valuta</button>
+    <button class="btn solid" id="reset">Ripristina</button>
+  </div>
+  <p class="note">Scrivi un importo in una qualsiasi riga: le altre si convertono subito. Tocca il codice di una valuta per cambiarla. I cambi si aggiornano due volte al giorno (07:47 e 22:47, ora di Phnom Penh) da tassi di mercato di riferimento: i cambiavalute locali applicano uno spread.</p>
+</div>
+
+<div class="ov" id="ov">
+  <div class="sheet">
+    <div class="sh-h"><input id="q" placeholder="Cerca valuta (es. yen, GBP)…" autocomplete="off"><button id="close">Chiudi</button></div>
+    <div class="opts" id="opts"></div>
+  </div>
+</div>
+
+<script>
+const SNAPSHOT = {"base":"USD","rates":{"USD":1.0,"AED":3.6725,"AFN":64.831003,"ALL":81.413961,"AMD":360.598583,"ANG":1.79,"AOA":922.628941,"ARS":1545.3974,"AUD":1.455802,"AWG":1.79,"AZN":1.700549,"BAM":1.754244,"BBD":2.0,"BDT":124.311672,"BGN":1.754244,"BHD":0.376,"BIF":2996.183505,"BMD":1.0,"BND":1.282885,"BOB":11.978142,"BRL":5.504608,"BSD":1.0,"BTN":94.056144,"BWP":13.927437,"BYN":2.993205,"BZD":2.0,"CAD":1.411571,"CDF":2299.322959,"CHF":0.819677,"CLF":0.024728,"CLP":977.409536,"CNH":6.672901,"CNY":6.679814,"COP":3243.549,"CRC":453.770191,"CUP":24.0,"CVE":98.900048,"CZK":21.83412,"DJF":177.721,"DKK":6.698569,"DOP":60.443519,"DZD":136.350725,"EGP":54.029846,"ERN":15.0,"ETB":161.652282,"EUR":0.896919,"FJD":2.258295,"FKP":0.748384,"FOK":6.698562,"GBP":0.748366,"GEL":2.593847,"GGP":0.748384,"GHS":11.675032,"GIP":0.748384,"GMD":74.812137,"GNF":8819.907896,"GTQ":7.644656,"GYD":209.739576,"HKD":7.839551,"HNL":26.8963,"HRK":6.757923,"HTG":131.078679,"HUF":325.846547,"IDR":18102.116346,"ILS":3.187869,"IMP":0.748384,"INR":94.047485,"IQD":1518.722577,"IRR":1684462.651198,"ISK":122.516278,"JEP":0.748384,"JMD":158.749023,"JOD":0.709,"JPY":158.326221,"KES":129.939272,"KGS":87.488793,"KHR":4057.651768,"KID":1.455726,"KMF":441.260909,"KRW":1361.401374,"KWD":0.309892,"KYD":0.833333,"KZT":447.881876,"LAK":22318.376887,"LBP":89500.0,"LKR":332.420388,"LRD":170.181026,"LSL":16.534263,"LYD":6.4022,"MAD":9.760281,"MDL":17.860989,"MGA":4593.156345,"MKD":54.928103,"MMK":2099.398044,"MNT":3583.533189,"MOP":8.074656,"MRU":40.55394,"MUR":47.019962,"MVR":15.443048,"MWK":1735.114022,"MXN":18.630883,"MYR":4.058843,"MZN":63.651531,"NAD":16.534263,"NGN":1346.24421,"NIO":36.807109,"NOK":9.45542,"NPR":150.48983,"NZD":1.799551,"OMR":0.384497,"PAB":1.0,"PEN":3.44483,"PGK":4.558205,"PHP":63.102308,"PKR":276.770608,"PLN":3.943439,"PYG":6239.966292,"QAR":3.64,"RON":4.78551,"RSD":105.284368,"RUB":81.928764,"RWF":1476.877503,"SAR":3.75,"SBD":7.960016,"SCR":14.535842,"SDG":458.671916,"SEK":9.891312,"SGD":1.282886,"SHP":0.748384,"SLE":23.035655,"SLL":23035.654542,"SOS":572.018525,"SRD":37.627421,"SSP":6001.033336,"STN":21.974799,"SYP":121.754058,"SZL":16.534263,"THB":33.558787,"TJS":9.208986,"TMT":3.5017,"TND":2.98806,"TOP":2.388825,"TRY":50.192892,"TTD":6.754849,"TVD":1.455726,"TWD":32.851408,"TZS":2636.292771,"UAH":45.367791,"UGX":4023.530406,"UYU":40.323718,"UZS":11894.538607,"VES":897.5383,"VND":25611.565139,"VUV":119.766117,"WST":2.747079,"XAF":588.347879,"XCD":2.7,"XCG":1.79,"XDR":0.739601,"XOF":588.347879,"XPF":107.032517,"YER":236.22126,"ZAR":16.534264,"ZMW":20.321176,"ZWG":26.5466,"ZWL":26.5466},"updated":"2026-11-09T00:02:31Z"};
+const DEFAULTS = ["EUR","USD","KHR","THB","AUD","IDR"];
+const LS = "fx-converter-v1";
+
+let rates = SNAPSHOT.rates;      // per 1 USD
+let updated = SNAPSHOT.updated;
+let live = false;
+let state = load() || { list: DEFAULTS.slice(), code: "USD", amount: 1 };
+let pickerIndex = null; // null = add new
+
+function load(){ try{ const s = JSON.parse(localStorage.getItem(LS)); if(s && Array.isArray(s.list) && s.list.length) return s; }catch(e){} return null; }
+function save(){ try{ localStorage.setItem(LS, JSON.stringify(state)); }catch(e){} }
+
+let dn; try{ dn = new Intl.DisplayNames(["it"],{type:"currency"}); }catch(e){ dn = null; }
+const NAMES_FIX = { KHR:"Riel cambogiano", THB:"Baht thailandese", IDR:"Rupia indonesiana" };
+function nameOf(c){ if(NAMES_FIX[c]) return NAMES_FIX[c]; try{ const n = dn && dn.of(c); return n && n!==c ? n.charAt(0).toUpperCase()+n.slice(1) : c; }catch(e){ return c; } }
+const FLAG_FIX = { EUR:"EU", ANG:"CW", XAF:"CM", XOF:"SN", XCD:"AG", XPF:"PF", XDR:null, XCG:"CW" };
+function flagOf(c){
+  let cc = c in FLAG_FIX ? FLAG_FIX[c] : c.slice(0,2);
+  if(!cc) return "🏳️";
+  return String.fromCodePoint(...[...cc.toUpperCase()].map(ch => 0x1F1E6 + ch.charCodeAt(0) - 65));
+}
+function decimals(c){ const r = rates[c] || 1; return r >= 100 ? 0 : 2; }
+function fmt(v, c){
+  if(!isFinite(v)) return "";
+  const d = decimals(c);
+  return v.toLocaleString("it-IT",{useGrouping:"always",minimumFractionDigits: d===0?0:2, maximumFractionDigits: d===0? (Math.abs(v)<1?2:0) : (Math.abs(v)<0.01?6:2)});
+}
+function fmtRate(x){ return x.toLocaleString("it-IT",{useGrouping:"always",maximumFractionDigits: x>=1000?0:(x>=10?2:4)}); }
+function parse(s){
+  s = String(s).replace(/[\s'’]/g,"");
+  if(!s) return NaN;
+  const hasC = s.includes(","), hasD = s.includes(".");
+  if(hasC && hasD){
+    if(s.lastIndexOf(",") > s.lastIndexOf(".")) s = s.replace(/\./g,"").replace(",",".");
+    else s = s.replace(/,/g,"");
+  } else if(hasC){
+    s = /^\d{1,3}(,\d{3})+$/.test(s) && (s.match(/,/g)||[]).length>1 ? s.replace(/,/g,"") : s.replace(",",".");
+  } else if(hasD){
+    if(/^\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g,"");
+  }
+  return parseFloat(s);
+}
+function convert(v, from, to){ return v / rates[from] * rates[to]; }
+
+const listEl = document.getElementById("list");
+function render(){
+  listEl.innerHTML = "";
+  state.list.forEach((c, i) => {
+    const row = document.createElement("div");
+    row.className = "row" + (c === state.code ? " active" : "");
+    row.innerHTML = `
+      <button class="cur" aria-label="Cambia valuta">
+        <span class="flag">${flagOf(c)}</span>
+        <span><span class="code">${c}<svg width="10" height="10" viewBox="0 0 10 10"><path d="M2 3.5l3 3 3-3" stroke="currentColor" stroke-width="1.6" fill="none"/></svg></span>
+        <span class="name">${nameOf(c)}</span></span>
+      </button>
+      <input class="val" inputmode="decimal" autocomplete="off" placeholder="0">
+      <button class="rm" aria-label="Rimuovi">×</button>
+      <div class="sub"></div>`;
+    const inp = row.querySelector(".val");
+    inp.dataset.code = c;
+    row.querySelector(".cur").onclick = () => openPicker(i);
+    row.querySelector(".rm").onclick = () => { if(state.list.length<=2) return; state.list.splice(i,1); if(!state.list.includes(state.code)){ state.amount = convert(state.amount, state.code, state.list[0]); state.code = state.list[0]; } save(); render(); };
+    inp.addEventListener("focus", () => {
+      if(state.code !== c){ state.amount = convert(state.amount, state.code, c); state.code = c; markActive(); }
+      setTimeout(()=>inp.select(), 0);
+    });
+    inp.addEventListener("input", () => {
+      state.code = c; const v = parse(inp.value); state.amount = isNaN(v) ? 0 : v;
+      markActive(); update(inp); save();
+    });
+    inp.addEventListener("blur", () => { if(state.code===c) inp.value = state.amount ? fmt(state.amount, c) : ""; });
+    listEl.appendChild(row);
+  });
+  update(null);
+}
+function markActive(){
+  [...listEl.children].forEach(r => r.classList.toggle("active", r.querySelector(".val").dataset.code === state.code));
+}
+function update(skip){
+  [...listEl.querySelectorAll(".row")].forEach(r => {
+    const inp = r.querySelector(".val"), c = inp.dataset.code;
+    const v = convert(state.amount, state.code, c);
+    if(inp !== skip) inp.value = state.amount ? fmt(v, c) : "";
+    const sub = r.querySelector(".sub");
+    if(c === state.code){ sub.textContent = ""; return; }
+    const x = convert(1, state.code, c);
+    sub.textContent = x >= 1 ? `1 ${state.code} = ${fmtRate(x)} ${c}` : `1 ${c} = ${fmtRate(1/x)} ${state.code}`;
+  });
+}
+function renderUpd(){
+  const d = new Date(updated);
+  const s = isNaN(d) ? "—" : d.toLocaleString("it-IT",{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit",timeZone:"Asia/Phnom_Penh"});
+  document.getElementById("upd").innerHTML = `<span class="dot${live?" live":""}"></span>Cambi del<br><b>${s}</b>`;
+}
+
+/* picker */
+const ov = document.getElementById("ov"), q = document.getElementById("q"), opts = document.getElementById("opts");
+function openPicker(i){ pickerIndex = i; q.value=""; drawOpts(); ov.classList.add("open"); setTimeout(()=>q.focus(),50); }
+function closePicker(){ ov.classList.remove("open"); }
+function drawOpts(){
+  const term = q.value.trim().toLowerCase();
+  const all = Object.keys(rates).sort();
+  const pri = DEFAULTS.concat(["GBP","JPY","CHF","CNY","SGD","VND","LAK","MYR","PHP","HKD","KRW","INR","CAD","NZD"]);
+  const ordered = pri.filter(c=>all.includes(c)).concat(all.filter(c=>!pri.includes(c)));
+  opts.innerHTML = "";
+  ordered.filter(c => !term || c.toLowerCase().includes(term) || nameOf(c).toLowerCase().includes(term)).forEach(c => {
+    const b = document.createElement("button");
+    const used = state.list.includes(c);
+    b.className = "opt" + (used ? " used" : "");
+    b.innerHTML = `<span class="flag">${flagOf(c)}</span><span class="c">${c}</span><span class="n">${nameOf(c)}</span>`;
+    b.onclick = () => pick(c);
+    opts.appendChild(b);
+  });
+}
+function pick(c){
+  if(pickerIndex === null){ if(!state.list.includes(c)) state.list.push(c); }
+  else {
+    const old = state.list[pickerIndex];
+    const j = state.list.indexOf(c);
+    if(j >= 0 && j !== pickerIndex){ state.list[j] = old; }
+    state.list[pickerIndex] = c;
+    if(old === state.code){ state.amount = convert(state.amount, old, c); state.code = c; }
+  }
+  save(); closePicker(); render();
+}
+q.addEventListener("input", drawOpts);
+document.getElementById("close").onclick = closePicker;
+ov.addEventListener("click", e => { if(e.target === ov) closePicker(); });
+document.getElementById("add").onclick = () => openPicker(null);
+document.getElementById("reset").onclick = () => { state = { list: DEFAULTS.slice(), code:"USD", amount: state.amount && state.code==="USD" ? state.amount : 1 }; save(); render(); };
+
+state.list = state.list.filter(c => rates[c]);
+if(!state.list.length) state.list = DEFAULTS.slice();
+if(!rates[state.code]) state.code = state.list[0];
+render(); renderUpd();
+
+/* fresh rates: rates.json is refreshed twice a day by a GitHub Action */
+function applyRates(d){
+  if(!d || !d.rates || typeof d.rates !== "object") return false;
+  const r = {};
+  for(const [k,v] of Object.entries(d.rates)) if(/^[A-Z]{3}$/.test(k) && typeof v === "number" && v > 0) r[k] = v;
+  if(!r.USD) return false;
+  const t = new Date(d.updated);
+  if(isNaN(t) || t < new Date(updated)) return false;
+  rates = r; updated = d.updated;
+  const active = document.activeElement && document.activeElement.classList.contains("val") ? document.activeElement : null;
+  update(active);
+  return true;
+}
+async function refresh(){
+  try{
+    const res = await fetch("rates.json?t=" + Date.now(), {cache:"no-store"});
+    if(!res.ok) throw 0;
+    applyRates(await res.json()); live = true;
+  }catch(e){ live = false; }
+  renderUpd();
+}
+refresh();
+document.addEventListener("visibilitychange", () => { if(document.visibilityState === "visible") refresh(); });
+if("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(()=>{});
+</script>
+</body>
+</html>
